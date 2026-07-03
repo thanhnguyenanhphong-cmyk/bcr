@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 # =====================================================================
 # 1. CẤU HÌNH HỆ THỐNG VÀ CYBER-SECURITY VIP
 # =====================================================================
-API_TOKEN = '8722833362:AAHRJ7-NCvTVjhidWBa6KjagQrFJcX1RYQE'
+API_TOKEN = '8722833362:AAHJT2UDN4E0KDCxJdtVv6lvJKWDVIcsbzE'
 ADMIN_ID = 7338417401
 
 bot = telebot.TeleBot(API_TOKEN)
@@ -336,64 +336,129 @@ def handle_menu_click(message):
         
         user_transactions[user_id] = {"step": "WAITING_PAYMENT", "goi": text, "ma_vip": noi_dung_ck}
         
-        if text == "⏱ Gói 1 Ngày - 30k": so_tien, days = 30000, 1
-        elif text == "⏱ Gói 3 Ngày - 55k": so_tien, days = 55000, 3
-        elif text == "⏱ Gói 7 Ngày - 90k": so_tien, days = 90000, 7
-        else: so_tien, days = 250000, 99999
-            
-        user_transactions[user_id]["days"] = days
-        link_qr = f"https://vietqr.io{NGAN_HANG_MA}-{SO_TAI_KHOAN}-compact2.jpg?amount={so_tien}&addInfo={urllib.parse.quote(noi_dung_ck)}&accountName={urllib.parse.quote(CHU_TAI_KHOAN)}"
+        if text == "⏱ Gói 1 Ngày - 30k":
+            so_tien, days = 30000, 1
+        elif text == "⏱ Gói 3 Ngày - 55k":
+            so_tien, days = 55000, 3
+        elif text == "⏱ Gói 7 Ngày - 90k":
+            so_tien, days = 90000, 7
+        else:
+            so_tien, days = 250000, 99999
 
-        thong_tin = (
-            f"✅ Gói cước đã chọn để đăng ký: {text}\n\n"
-            f"📌 THÔNG TIN CHUYỂN KHOẢN:\n"
-            f"• 🏦 Ngân hàng: MB BANK\n"
-            f"• 💳 Số tài khoản: `{SO_TAI_KHOAN}`\n"
-            f"• 👤 Chủ tài khoản: {CHU_TAI_KHOAN}\n"
-            f"• 📝 Nội dung chuyển khoản bắt buộc: `{noi_dung_ck}`\n"
-        )
-        
+        user_transactions[user_id]["days"] = days
+
+        import urllib.parse
+
+        link_qr = (
+    "https://img.vietqr.io/image/"
+    f"{NGAN_HANG_MA}-{SO_TAI_KHOAN}-compact2.png"
+    f"?amount={so_tien}"
+    f"&addInfo={urllib.parse.quote(noi_dung_ck)}"
+    f"&accountName={urllib.parse.quote(CHU_TAI_KHOAN)}"
+)
+
         inline_markup = types.InlineKeyboardMarkup()
-        inline_markup.add(types.InlineKeyboardButton("✅ Đã Chuyển Khoản", callback_data=f"da_ck_{user_id}"), types.InlineKeyboardButton("❌ Hủy Giao Dịch", callback_data=f"huy_ck_{user_id}"))
-        bot.send_message(message.chat.id, thong_tin, parse_mode="Markdown", reply_markup=inline_markup)
-        
-        try: bot.send_photo(message.chat.id, link_qr, caption="📷 Vui lòng quét mã QR Ngân hàng dưới đây để thực hiện thanh toán:")
-        except Exception: bot.send_message(message.chat.id, "❌ Hệ thống không thể tải mã QR, vui lòng chuyển khoản thủ công theo thông tin phía trên.")
-            
+        inline_markup.add(
+            types.InlineKeyboardButton(
+                "✅ Đã Chuyển Khoản",
+                callback_data=f"da_ck_{user_id}"
+            ),
+            types.InlineKeyboardButton(
+                "❌ Hủy Giao Dịch",
+                callback_data=f"huy_ck_{user_id}"
+            )
+        )
+
+        caption = (
+            f"✅ Gói cước đã chọn: {text}\n\n"
+            f"🏦 Ngân hàng: MB BANK\n"
+            f"💳 Số tài khoản: `{SO_TAI_KHOAN}`\n"
+            f"👤 Chủ tài khoản: {CHU_TAI_KHOAN}\n"
+            f"💰 Số tiền: `{so_tien:,}đ`\n"
+            f"📝 Nội dung chuyển khoản: `{noi_dung_ck}`"
+        )
+
+        try:
+            bot.send_photo(
+                message.chat.id,
+                link_qr,
+                caption=caption,
+                parse_mode="Markdown",
+                reply_markup=inline_markup
+            )
+        except Exception as e:
+            print(e)
+            bot.send_message(
+                message.chat.id,
+                str(e)
+            )
     else:
         if user_id in user_transactions and user_transactions[user_id].get("step") == "WAITING_BILL":
-            bot.reply_to(message, "⚠️ Hệ thống đang chờ nhận ảnh ảnh chụp Hóa đơn (Bill) xác minh thanh toán giao dịch chuyển khoản thành công của bạn!")
+            bot.reply_to(
+                message,
+                "⚠️ Hệ thống đang chờ nhận ảnh chụp bill chuyển khoản!"
+            )
         else:
-            bot.reply_to(message, "⚠️ Lệnh điều khiển Terminal không hợp lệ. Vui lòng bấm trực tiếp trên các nút tính năng hệ thống cung cấp.")
-
-
+            bot.reply_to(
+                message,
+                "⚠️ Lệnh điều khiển không hợp lệ. Vui lòng bấm các nút của bot."
+            )
 # =====================================================================
 # 6. XỬ LÝ NHẬN VÀ KIỂM TRA ẢNH BILL GIAO DỊCH (LỚP AN TOÀN FILE)
 # =====================================================================
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
     user_id = message.from_user.id
+
     if user_id in user_transactions and user_transactions[user_id].get("step") == "WAITING_BILL":
         trans = user_transactions[user_id]
-        bot.send_message(message.chat.id, "⏳ Hóa đơn của bạn đã được chuyển tiếp mã hóa an toàn tới Admin hệ thống. Vui lòng đợi phê duyệt...")
-        
-        admin_markup = types.InlineKeyboardMarkup()
-        admin_markup.add(types.InlineKeyboardButton("✅ Duyệt Cấp Key VIP", callback_data=f"admin_duyet_{user_id}"), types.InlineKeyboardButton("❌ Từ Chối Hủy Đơn", callback_data=f"admin_huy_{user_id}"))
-        
-        caption_admin = (
-            "🔔 **YÊU CẦU PHÊ DUYỆT GIAO DỊCH KEY VIP MỚI**\n"
-            f"• 👤 User ID khách hàng: `{user_id}`\n"
-            f"• 📦 Gói cước đăng ký: **{trans['goi']}**\n"
-            f"• 📝 Chuỗi nội dung so khớp: `{trans['ma_vip']}`"
-        )
-        try:
-            bot.send_photo(ADMIN_ID, message.photo[-1].file_id, caption=caption_admin, parse_mode="Markdown", reply_markup=admin_markup)
-            user_transactions[user_id]["step"] = "WAITING_ADMIN"
-        except Exception:
-            bot.send_message(message.chat.id, "❌ Hệ thống mất kết nối tới Node Admin trung tâm. Hãy thực hiện lại sau ít phút!")
-    else:
-        bot.reply_to(message, "⚠️ Hệ thống bảo mật nâng cao: Từ chối nhận tệp tin hình ảnh từ tài khoản của bạn.")
 
+        bot.send_message(
+            message.chat.id,
+            "⏳ Hóa đơn của bạn đã được gửi tới Admin. Vui lòng chờ duyệt..."
+        )
+
+        admin_markup = types.InlineKeyboardMarkup()
+        admin_markup.add(
+            types.InlineKeyboardButton(
+                "✅ Duyệt Cấp Key VIP",
+                callback_data=f"admin_duyet_{user_id}"
+            ),
+            types.InlineKeyboardButton(
+                "❌ Từ Chối Hủy Đơn",
+                callback_data=f"admin_huy_{user_id}"
+            )
+        )
+
+        caption_admin = (
+            "🔔 YÊU CẦU DUYỆT GIAO DỊCH\n\n"
+            f"👤 User: `{user_id}`\n"
+            f"📦 Gói: {trans['goi']}\n"
+            f"📝 Nội dung CK: `{trans['ma_vip']}`"
+        )
+
+        try:
+            bot.send_photo(
+                ADMIN_ID,
+                message.photo[-1].file_id,
+                caption=caption_admin,
+                parse_mode="Markdown",
+                reply_markup=admin_markup
+            )
+            user_transactions[user_id]["step"] = "WAITING_ADMIN"
+
+        except Exception as e:
+            print(e)
+            bot.send_message(
+                message.chat.id,
+                f"❌ Không thể gửi bill tới Admin.\n{e}"
+            )
+
+    else:
+        bot.reply_to(
+            message,
+            "⚠️ Hiện tại hệ thống không yêu cầu bạn gửi ảnh."
+        )
 
 # =====================================================================
 # 7. XỬ LÝ CỔNG CALLBACK QUERY (KHÁCH & ADMIN KHÓA CHẶT CHẼ)
