@@ -265,7 +265,7 @@ def handle_menu_click(message):
         def auto_fetch_loop(uid, chat_id, t_ban):
             while uid in user_auto_tables and user_auto_tables[uid]["active"]:
                 try:
-                    response = requests.get("https://apibcrneww.onrender.com/dudoan/sexy/all", timeout=8)
+                    response = requests.get("https://baccarat-97eu.onrender.com/", timeout=8)
                     if response.status_code == 200:
                         data_list = response.json().get("data", [])
                         table_data = next((item for item in data_list if str(item.get("ban")).strip().upper() == t_ban.upper()), None)
